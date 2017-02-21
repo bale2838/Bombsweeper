@@ -1,5 +1,6 @@
 package com.bale.bombsweeper;
 
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,6 +27,11 @@ public class Board extends JPanel {
 	private final int BOMB_CELL = 9;
 	private final int COVERED_BOMB_CELL = BOMB_CELL + COVER_FOR_CELL;
 	private final int MARKED_BOMB_CELL = COVERED_BOMB_CELL + MARK_FOR_CELL;
+
+	private final int DRAW_BOMB = 9;
+	private final int DRAW_COVER = 10;
+	private final int DRAW_MARK = 11;
+	private final int DRAW_WRONG_MARK = 12;
 
 	// array of integers represents the mine field
 	private int[] field;
@@ -86,7 +92,7 @@ public class Board extends JPanel {
 						}
 					}
 				}
-				
+
 				cell = pos - NUM_COLS;
 				if (cell >= 0) {
 					if (field[cell] != COVERED_BOMB_CELL) {
@@ -122,6 +128,51 @@ public class Board extends JPanel {
 				}
 			}
 
+		}
+	}
+
+	@Override
+	public void paintComponent(Graphics g) {
+		int cell = 0;
+		int uncover = 0;
+
+		for (int i = 0; i < NUM_ROWS; i++) {
+			for (int j = 0; j < NUM_COLS; j++) {
+				cell = field[(i * NUM_COLS) + j];
+
+
+				if ((inGame && cell == BOMB_CELL)) {
+					inGame = false;
+				}
+
+				if (!inGame) {
+					if (cell == COVERED_BOMB_CELL) {
+						cell = DRAW_BOMB;
+					} else if (cell == MARKED_BOMB_CELL) {
+						cell = DRAW_MARK;
+					} else if (cell > COVERED_BOMB_CELL) {
+						cell = DRAW_WRONG_MARK;
+					} else if (cell > BOMB_CELL) {
+						cell = DRAW_COVER;
+					}
+				} else {
+					if (cell > COVERED_BOMB_CELL) {
+						cell = DRAW_MARK;
+					} else if (cell > BOMB_CELL) {
+						cell = DRAW_COVER;
+						uncover++;
+					}
+				}
+				g.drawImage(img[cell], (j*CELL_SIZE),
+						(i*CELL_SIZE), this);
+			}
+		}
+		
+		if (uncover == 0 && inGame) {
+			inGame = false;
+			statusBar.setText("WIN!");
+		} else if (!inGame) {
+			statusBar.setText("LOSE!");
 		}
 	}
 
