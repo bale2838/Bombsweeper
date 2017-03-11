@@ -25,8 +25,8 @@ public class Board extends JPanel {
 	private final int MARK_FOR_CELL = 10;
 	private final int EMPTY_CELL = 0;
 	private final int BOMB_CELL = 9;
-	private final int COVERED_BOMB_CELL = BOMB_CELL + COVER_FOR_CELL;
-	private final int MARKED_BOMB_CELL = COVERED_BOMB_CELL + MARK_FOR_CELL;
+	private final int COVERED_BOMB_CELL = COVER_FOR_CELL + BOMB_CELL;
+	private final int MARKED_BOMB_CELL = MARK_FOR_CELL + COVERED_BOMB_CELL;
 
 	private final int DRAW_BOMB = 9;
 	private final int DRAW_COVER = 10;
@@ -131,6 +131,79 @@ public class Board extends JPanel {
 		}
 	}
 
+	public void findEmptyCells(int j) {
+		int current_col = j % NUM_COLS;
+		int cell;
+
+		if (current_col > 0) { 
+			cell = j - NUM_COLS - 1;
+			if (cell >= 0)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+
+			cell = j - 1;
+			if (cell >= 0)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+
+			cell = j + NUM_COLS - 1;
+			if (cell < FIELD_SIZE)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+		}
+
+		cell = j - NUM_COLS;
+		if (cell >= 0)
+			if (field[cell] > BOMB_CELL) {
+				field[cell] -= COVER_FOR_CELL;
+				if (field[cell] == EMPTY_CELL)
+					findEmptyCells(cell);
+			}
+
+		cell = j + NUM_COLS;
+		if (cell < FIELD_SIZE)
+			if (field[cell] > BOMB_CELL) {
+				field[cell] -= COVER_FOR_CELL;
+				if (field[cell] == EMPTY_CELL)
+					findEmptyCells(cell);
+			}
+
+		if (current_col < (NUM_COLS - 1)) {
+			cell = j - NUM_COLS + 1;
+			if (cell >= 0)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+
+			cell = j + NUM_COLS + 1;
+			if (cell < FIELD_SIZE)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+
+			cell = j + 1;
+			if (cell < FIELD_SIZE)
+				if (field[cell] > BOMB_CELL) {
+					field[cell] -= COVER_FOR_CELL;
+					if (field[cell] == EMPTY_CELL)
+						findEmptyCells(cell);
+				}
+		}
+	}
+
 	@Override
 	public void paintComponent(Graphics g) {
 		int cell = 0;
@@ -167,7 +240,7 @@ public class Board extends JPanel {
 						(i*CELL_SIZE), this);
 			}
 		}
-		
+
 		if (uncover == 0 && inGame) {
 			inGame = false;
 			statusBar.setText("WIN!");
@@ -187,6 +260,56 @@ public class Board extends JPanel {
 
 			boolean rep = false;
 
+			if (!inGame) {
+				newGame();
+				repaint();
+			}
+
+			if ((x < NUM_COLS * CELL_SIZE) && (y < NUM_ROWS * CELL_SIZE)) {
+
+				if (e.getButton() == MouseEvent.BUTTON3) {
+
+					if (field[(cRow * NUM_COLS) + cCol] > BOMB_CELL) {
+						rep = true;
+
+						if (field[(cRow * NUM_COLS) + cCol] <= COVERED_BOMB_CELL) {
+							if (bombsLeft > 0) {
+								field[(cRow * NUM_COLS) + cCol] += MARK_FOR_CELL;
+								bombsLeft--;
+								statusBar.setText(Integer.toString(bombsLeft));
+							} else
+								statusBar.setText("No marks left");
+						} else {
+
+							field[(cRow * NUM_COLS) + cCol] -= MARK_FOR_CELL;
+							bombsLeft++;
+							statusBar.setText(Integer.toString(bombsLeft));
+						}
+					}
+
+				} else {
+
+					if (field[(cRow * NUM_COLS) + cCol] > COVERED_BOMB_CELL) {
+						return;
+					}
+
+					if ((field[(cRow * NUM_COLS) + cCol] > BOMB_CELL) &&
+							(field[(cRow * NUM_COLS) + cCol] < MARKED_BOMB_CELL)) {
+
+						field[(cRow * NUM_COLS) + cCol] -= COVER_FOR_CELL;
+						rep = true;
+
+						if (field[(cRow * NUM_COLS) + cCol] == BOMB_CELL)
+							inGame = false;
+						if (field[(cRow * NUM_COLS) + cCol] == EMPTY_CELL)
+							findEmptyCells((cRow * NUM_COLS) + cCol);
+					}
+				}
+
+				if (rep)
+					repaint();
+
+			}
 		}
 	}
 }
